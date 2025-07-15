@@ -1,71 +1,27 @@
-/**
- * Interfaz para las estadísticas del repositorio de GitHub
- */
-export interface GitHubRepoStats {
-  /** Nombre del repositorio */
-  name: string
-  /** Nombre completo del repositorio (usuario/nombre) */
-  fullName: string
-  /** URL del repositorio en GitHub */
-  htmlUrl: string
-  /** Número de estrellas */
-  stargazersCount: number
-  /** Número de forks */
-  forksCount: number
-  /** Número de issues abiertos */
-  openIssuesCount: number
-  /** Descripción del repositorio */
-  description: string
+export interface RepoStats {
+    name: string;
+    fullName: string;
+    htmlUrl: string;
+    stargazersCount: number;
+    forksCount: number;
+    openIssuesCount: number;
+    description: string;
+    createdAt: string;
+    updatedAt: string;
+    languages: Record<string, number>;
 }
-
 /**
- * Interfaz para los datos de respuesta de la API de GitHub
+ * Función principal para crear una tarjeta de estadísticas de GitHub
+ * @param {string} selector - Selector CSS del elemento contenedor
+ * @param {string} repoName - Nombre del repositorio en formato 'usuario/nombre-del-repo'
+ * @param {string} githubAuthToken - Token de autenticación de Github opcional
  */
-export interface GitHubRepoResponse {
-  name: string
-  full_name: string
-  html_url: string
-  stargazers_count: number
-  forks_count: number
-  open_issues_count: number
-  description: string | null
-}
-
+export declare function createRepoCard(selector: string, repoName: string, githubAuthToken?: string): Promise<void>;
 /**
- * Crea una tarjeta de estadísticas de GitHub en el elemento especificado
- * @param selector - Selector CSS del elemento contenedor donde se insertará la tarjeta
- * @param repoName - Nombre del repositorio en formato 'usuario/nombre-del-repo'
- * @returns Promise<void> - Promesa que se resuelve cuando la tarjeta se ha creado exitosamente
- * @throws Error - Si no se proporcionan los parámetros requeridos o si hay un error al obtener los datos
- *
- * @example
- * ```javascript
- * import { createRepoCard } from 'github-repo-stats-card';
- *
- * // Crear una tarjeta de estadísticas
- * await createRepoCard('#my-container', 'Kiyameh/repo-stats-card');
- * ```
+ * Obtiene solo los datos del repositorio sin manipular el DOM
+ * Útil para SSR (Server-Side Rendering)
+ * @param {string} repoName - Nombre del repositorio en formato 'usuario/nombre-del-repo'
+ * @param {string} githubAuthToken - Token de autenticación de Github opcional
+ * @returns {Promise<RepoStats>} Promesa que resuelve con las estadísticas del repositorio
  */
-export function createRepoCard(
-  selector: string,
-  repoName: string
-): Promise<void>
-
-/**
- * Genera el HTML de la tarjeta de estadísticas
- * @param stats - Objeto con las estadísticas del repositorio
- * @returns HTML de la tarjeta como string
- */
-export function generateHTML(stats: GitHubRepoStats): string
-
-/**
- * Escapa caracteres HTML para prevenir XSS
- * @param text - Texto a escapar
- * @returns Texto escapado
- */
-export function escapeHtml(text: string): string
-
-/**
- * Inyecta los estilos CSS necesarios en el head del documento
- */
-export function injectCSS(): void
+export declare function getRepoStats(repoName: string, githubAuthToken?: string): Promise<RepoStats>;

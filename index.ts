@@ -1,74 +1,114 @@
+// Types for the stats data
+export interface RepoStats {
+  name: string
+  fullName: string
+  htmlUrl: string
+  stargazersCount: number
+  forksCount: number
+  openIssuesCount: number
+  description: string
+  createdAt: string
+  updatedAt: string
+  languages: Record<string, number>
+}
+
+
 /**
  * Función principal para crear una tarjeta de estadísticas de GitHub
  * @param {string} selector - Selector CSS del elemento contenedor
  * @param {string} repoName - Nombre del repositorio en formato 'usuario/nombre-del-repo'
  * @param {string} githubAuthToken - Token de autenticación de Github opcional
  */
-export async function createRepoCard(selector, repoName, githubAuthToken) {
-    // Verificar si estamos en el navegador
-    if (typeof window === 'undefined' || typeof document === 'undefined') {
-        console.warn('createRepoCard: Esta función solo puede ejecutarse en el navegador');
-        return;
+export async function createRepoCard(selector: string, repoName: string, githubAuthToken?: string) {
+  // Verificar si estamos en el navegador
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    console.warn(
+      'createRepoCard: Esta función solo puede ejecutarse en el navegador'
+    )
+    return
+  }
+
+  // Validar parámetros
+  if (!selector || !repoName) {
+    throw new Error(
+      'Se requieren tanto el selector como el nombre del repositorio'
+    )
+  }
+
+  try {
+    // Añadir el token de Github solo si está disponible
+    const headers = {
+      Accept: 'application/vnd.github.v3+json',
+    } as Record<string, string>
+
+    if (githubAuthToken) {
+      headers.Authorization = `Bearer ${githubAuthToken}`
     }
-    // Validar parámetros
-    if (!selector || !repoName) {
-        throw new Error('Se requieren tanto el selector como el nombre del repositorio');
+  
+    // Obtener datos del repositorio
+    const response = await fetch(
+      `https://api.github.com/repos/${repoName}`,
+      { headers }
+    )
+  
+    const languages = await fetch(
+      `https://api.github.com/repos/${repoName}/languages`,
+      { headers }
+    )
+
+    if (!response.ok || !languages.ok) {
+      throw new Error(
+        `Error al obtener datos del repositorio: ${response.status}`
+      )
     }
-    try {
-        // Añadir el token de Github solo si está disponible
-        const headers = {
-            Accept: 'application/vnd.github.v3+json',
-        };
-        if (githubAuthToken) {
-            headers.Authorization = `Bearer ${githubAuthToken}`;
-        }
-        // Obtener datos del repositorio
-        const response = await fetch(`https://api.github.com/repos/${repoName}`, { headers });
-        const languages = await fetch(`https://api.github.com/repos/${repoName}/languages`, { headers });
-        if (!response.ok || !languages.ok) {
-            throw new Error(`Error al obtener datos del repositorio: ${response.status}`);
-        }
-        const repoData = await response.json();
-        const languagesData = await languages.json();
-        // Extraer estadísticas clave
-        const stats = {
-            name: repoData.name,
-            fullName: repoData.full_name,
-            htmlUrl: repoData.html_url,
-            stargazersCount: repoData.stargazers_count,
-            forksCount: repoData.forks_count,
-            openIssuesCount: repoData.open_issues_count,
-            createdAt: repoData.created_at,
-            updatedAt: repoData.updated_at,
-            description: repoData.description || 'Sin descripción',
-            languages: languagesData,
-        };
-        // Inyectar CSS si no existe
-        injectCSS();
-        // Generar HTML de la tarjeta
-        const cardHTML = generateHTML(stats);
-        // Encontrar el elemento contenedor
-        const container = document.querySelector(selector);
-        if (!container) {
-            throw new Error(`No se encontró el elemento con selector: ${selector}`);
-        }
-        // Insertar la tarjeta
-        container.innerHTML = cardHTML;
+
+    const repoData = await response.json()
+    const languagesData = await languages.json()
+
+    // Extraer estadísticas clave
+    const stats: RepoStats = {
+      name: repoData.name,
+      fullName: repoData.full_name,
+      htmlUrl: repoData.html_url,
+      stargazersCount: repoData.stargazers_count,
+      forksCount: repoData.forks_count,
+      openIssuesCount: repoData.open_issues_count,
+      createdAt: repoData.created_at,
+      updatedAt: repoData.updated_at,
+      description: repoData.description || 'Sin descripción',
+      languages: languagesData,
+    } 
+
+    // Inyectar CSS si no existe
+    injectCSS()
+
+    // Generar HTML de la tarjeta
+    const cardHTML = generateHTML(stats)
+
+    // Encontrar el elemento contenedor
+    const container = document.querySelector(selector)
+    if (!container) {
+      throw new Error(`No se encontró el elemento con selector: ${selector}`)
     }
-    catch (error) {
-        console.error('Error al crear la tarjeta de GitHub:', error);
-        // Mostrar mensaje de error en el contenedor
-        const container = document.querySelector(selector);
-        if (container) {
-            container.innerHTML = `
+
+    // Insertar la tarjeta
+    container.innerHTML = cardHTML
+  } catch (error) {
+    console.error('Error al crear la tarjeta de GitHub:', error)
+
+    // Mostrar mensaje de error en el contenedor
+    const container = document.querySelector(selector)
+    if (container) {
+      container.innerHTML = `
         <div class="github-stats-card error">
           <p>❌ Error al cargar las estadísticas del repositorio</p>
-          <p class="error-message">${error.message}</p>
+          <p class="error-message">${(error as Error).message}</p>
         </div>
-      `;
-        }
+      `
     }
+  }
 }
+
 /**
  * Obtiene solo los datos del repositorio sin manipular el DOM
  * Útil para SSR (Server-Side Rendering)
@@ -76,170 +116,203 @@ export async function createRepoCard(selector, repoName, githubAuthToken) {
  * @param {string} githubAuthToken - Token de autenticación de Github opcional
  * @returns {Promise<RepoStats>} Promesa que resuelve con las estadísticas del repositorio
  */
-export async function getRepoStats(repoName, githubAuthToken) {
-    // Validar parámetros
-    if (!repoName) {
-        throw new Error('Se requiere el nombre del repositorio');
+export async function getRepoStats(repoName: string, githubAuthToken?: string) {
+  // Validar parámetros
+  if (!repoName) {
+    throw new Error('Se requiere el nombre del repositorio')
+  }
+
+  try {
+    // Obtener datos del repositorio
+    const headers = {
+      Accept: 'application/vnd.github.v3+json',
+    } as Record<string, string>
+
+    if (githubAuthToken) {
+      headers.Authorization = `Bearer ${githubAuthToken}`
     }
-    try {
-        // Obtener datos del repositorio
-        const headers = {
-            Accept: 'application/vnd.github.v3+json',
-        };
-        if (githubAuthToken) {
-            headers.Authorization = `Bearer ${githubAuthToken}`;
-        }
-        const response = await fetch(`https://api.github.com/repos/${repoName}`, { headers });
-        const languages = await fetch(`https://api.github.com/repos/${repoName}/languages`, { headers });
-        if (!response.ok || !languages.ok) {
-            throw new Error(`Error al obtener datos del repositorio: ${response.status}`);
-        }
-        const repoData = await response.json();
-        const languagesData = await languages.json();
-        // Extraer estadísticas clave
-        return {
-            name: repoData.name,
-            fullName: repoData.full_name,
-            htmlUrl: repoData.html_url,
-            stargazersCount: repoData.stargazers_count,
-            forksCount: repoData.forks_count,
-            openIssuesCount: repoData.open_issues_count,
-            description: repoData.description || 'Sin descripción',
-            createdAt: repoData.created_at,
-            updatedAt: repoData.updated_at,
-            languages: languagesData,
-        };
+    const response = await fetch(`https://api.github.com/repos/${repoName}`, { headers })
+    const languages = await fetch(
+      `https://api.github.com/repos/${repoName}/languages`,
+      { headers }
+    )
+
+    if (!response.ok || !languages.ok) {
+      throw new Error(
+        `Error al obtener datos del repositorio: ${response.status}`
+      )
     }
-    catch (error) {
-        console.error('Error al obtener estadísticas del repositorio:', error);
-        throw error;
-    }
+
+    const repoData = await response.json()
+    const languagesData = await languages.json()
+    // Extraer estadísticas clave
+    return {
+      name: repoData.name,
+      fullName: repoData.full_name,
+      htmlUrl: repoData.html_url,
+      stargazersCount: repoData.stargazers_count,
+      forksCount: repoData.forks_count,
+      openIssuesCount: repoData.open_issues_count,
+      description: repoData.description || 'Sin descripción',
+      createdAt: repoData.created_at,
+      updatedAt: repoData.updated_at,
+      languages: languagesData,
+    } as RepoStats
+  } catch (error) {
+    console.error('Error al obtener estadísticas del repositorio:', error)
+    throw error
+  }
 }
+
 /**
  * Escapa caracteres HTML para prevenir XSS
  * @param {string} text - Texto a escapar
  * @returns {string} Texto escapado
  */
-function escapeHtml(text) {
-    if (typeof document === 'undefined') {
-        // Fallback para SSR
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+function escapeHtml(text: string) {
+  if (typeof document === 'undefined') {
+    // Fallback para SSR
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+  }
+
+  const div = document.createElement('div')
+  div.textContent = text
+  return div.innerHTML
 }
+
 /**
  * Formatea una fecha en formato "DD/MM/YYYY"
  * @param {string} dateString - Fecha en formato ISO 8601
  * @returns {string} Fecha formateada
  */
-function formatDate(dateString) {
-    return new Date(dateString).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
+
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
 }
+
 /**
  * Formatea un número en formato "1.2K" o "1.2M"
  * @param {number} num - Número a formatear
  * @returns {string} Número formateado
  */
-function formatNumber(num) {
-    if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + "M";
-    }
-    if (num >= 1000) {
-        return (num / 1000).toFixed(1) + "K";
-    }
-    return num.toString();
+function formatNumber(num: number): string {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + "M"
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1) + "K"
+  }
+  return num.toString()
 }
+
 /**
  * Obtiene el color de un lenguaje de programación
  * @param {string} language - Lenguaje de programación
  * @returns {string} Color del lenguaje
  */
-function getLanguageColor(language) {
-    const colors = {
-        JavaScript: "#f1e05a",
-        TypeScript: "#3178c6",
-        Python: "#3572a5",
-        Java: "#b07219",
-        HTML: "#e34c26",
-        CSS: "#563d7c",
-        Go: "#00add8",
-        Rust: "#dea584",
-        PHP: "#4f5d95",
-        Ruby: "#701516",
-        "C++": "#f34b7d",
-        "C#": "#239120",
-        Swift: "#fa7343",
-        Kotlin: "#a97bff",
-        Dart: "#00b4ab",
-        Shell: "#89e051",
-    };
-    return colors[language] || "#8b949e";
+function getLanguageColor(language: string): string {
+  const colors: Record<string, string> = {
+    JavaScript: "#f1e05a",
+    TypeScript: "#3178c6",
+    Python: "#3572a5",
+    Java: "#b07219",
+    HTML: "#e34c26",
+    CSS: "#563d7c",
+    Go: "#00add8",
+    Rust: "#dea584",
+    PHP: "#4f5d95",
+    Ruby: "#701516",
+    "C++": "#f34b7d",
+    "C#": "#239120",
+    Swift: "#fa7343",
+    Kotlin: "#a97bff",
+    Dart: "#00b4ab",
+    Shell: "#89e051",
+  }
+  return colors[language] || "#8b949e"
 }
+
 /**
  * Genera los segmentos de un gráfico de torta
  * @param {Array<{ language: string; percentage: string }>} languagePercentages - Array de lenguajes y porcentajes
  * @returns {string} HTML de los segmentos
  */
-function generatePieSegments(languagePercentages) {
-    let cumulativePercentage = 0;
-    return languagePercentages
-        .map(({ language, percentage }) => {
-        const startAngle = (cumulativePercentage / 100) * 360;
-        const endAngle = ((cumulativePercentage + Number.parseFloat(percentage)) / 100) * 360;
-        cumulativePercentage += Number.parseFloat(percentage);
-        const startAngleRad = (startAngle * Math.PI) / 180;
-        const endAngleRad = (endAngle * Math.PI) / 180;
-        const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-        const x1 = 50 + 40 * Math.cos(startAngleRad);
-        const y1 = 50 + 40 * Math.sin(startAngleRad);
-        const x2 = 50 + 40 * Math.cos(endAngleRad);
-        const y2 = 50 + 40 * Math.sin(endAngleRad);
-        const pathData = [`M 50 50`, `L ${x1} ${y1}`, `A 40 40 0 ${largeArcFlag} 1 ${x2} ${y2}`, `Z`].join(" ");
-        return `<path d="${pathData}" fill="${getLanguageColor(language)}" class="stat-card-pie-segment" title="${language}: ${percentage}%"></path>`;
+
+function generatePieSegments(languagePercentages: Array<{ language: string; percentage: string }>): string {
+  let cumulativePercentage = 0
+
+  return languagePercentages
+    .map(({ language, percentage }) => {
+      const startAngle = (cumulativePercentage / 100) * 360
+      const endAngle = ((cumulativePercentage + Number.parseFloat(percentage)) / 100) * 360
+      cumulativePercentage += Number.parseFloat(percentage)
+
+      const startAngleRad = (startAngle * Math.PI) / 180
+      const endAngleRad = (endAngle * Math.PI) / 180
+
+      const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1"
+
+      const x1 = 50 + 40 * Math.cos(startAngleRad)
+      const y1 = 50 + 40 * Math.sin(startAngleRad)
+      const x2 = 50 + 40 * Math.cos(endAngleRad)
+      const y2 = 50 + 40 * Math.sin(endAngleRad)
+
+      const pathData = [`M 50 50`, `L ${x1} ${y1}`, `A 40 40 0 ${largeArcFlag} 1 ${x2} ${y2}`, `Z`].join(" ")
+
+      return `<path d="${pathData}" fill="${getLanguageColor(language)}" class="stat-card-pie-segment" title="${language}: ${percentage}%"></path>`
     })
-        .join("");
+    .join("")
 }
+
 /**
  * Genera el HTML de la tarjeta de estadísticas de GitHub
  * @param {RepoStats} stats - Estadísticas del repositorio
  * @returns {string} HTML de la tarjeta
  */
-function generateHTML(stats) {
-    // Calculate language percentages
-    const totalBytes = Object.values(stats.languages).reduce((sum, bytes) => sum + bytes, 0);
-    const languagePercentages = Object.entries(stats.languages)
-        .map(([language, bytes]) => ({
-        language,
-        bytes,
-        percentage: ((bytes / totalBytes) * 100).toFixed(1),
+function generateHTML(stats: RepoStats): string {
+  // Calculate language percentages
+  const totalBytes = Object.values(stats.languages).reduce((sum, bytes) => sum + bytes, 0)
+  const languagePercentages = Object.entries(stats.languages)
+    .map(([language, bytes]) => ({
+      language,
+      bytes,
+      percentage: ((bytes / totalBytes) * 100).toFixed(1),
     }))
-        .sort((a, b) => b.bytes - a.bytes);
-    // Generate pie chart segments
-    const pieSegments = generatePieSegments(languagePercentages);
-    // Generate linear chart segments
-    const linearSegments = languagePercentages
-        .map(({ language, percentage }) => `<div class="stat-card-language-segment" style="width: ${percentage}%; background-color: ${getLanguageColor(language)};" title="${language}: ${percentage}%"></div>`)
-        .join("");
-    // Generate language list items
-    const languageItems = languagePercentages
-        .map(({ language, percentage }) => `<li class="stat-card-language-item">
+    .sort((a, b) => b.bytes - a.bytes)
+
+  // Generate pie chart segments
+  const pieSegments = generatePieSegments(languagePercentages)
+
+  // Generate linear chart segments
+  const linearSegments = languagePercentages
+    .map(
+      ({ language, percentage }) =>
+        `<div class="stat-card-language-segment" style="width: ${percentage}%; background-color: ${getLanguageColor(language)};" title="${language}: ${percentage}%"></div>`,
+    )
+    .join("")
+
+  // Generate language list items
+  const languageItems = languagePercentages
+    .map(
+      ({ language, percentage }) =>
+        `<li class="stat-card-language-item">
         <span class="stat-card-language-dot" style="background-color: ${getLanguageColor(language)};" aria-hidden="true"></span>
         <span>${language}</span>
         <span class="stat-card-language-percentage">${percentage}%</span>
-      </li>`)
-        .join("");
-    return `
+      </li>`,
+    )
+    .join("")
+
+  return `
     <div class="stat-card-container">
       <article class="stat-card" role="main">
         <div class="stat-card-layout">
@@ -320,33 +393,36 @@ function generateHTML(stats) {
         <span class="stat-card-sr-only">
           Repository statistics: ${formatNumber(stats.stargazersCount)} stars, ${formatNumber(stats.forksCount)} forks, ${formatNumber(stats.openIssuesCount)} open issues. 
           Main languages: ${languagePercentages
-        .slice(0, 3)
-        .map((l) => `${l.language} ${l.percentage}%`)
-        .join(", ")}.
+            .slice(0, 3)
+            .map((l) => `${l.language} ${l.percentage}%`)
+            .join(", ")}.
         </span>
       </article>
     </div>
-  `;
+  `
 }
+
 /**
  * Inyecta el CSS de la tarjeta de estadísticas de GitHub
  */
-function injectCSS() {
-    // Verify if we are in browser
-    if (typeof window === "undefined" || typeof document === "undefined") {
-        console.warn("GitHub Stats Card: Not running in browser environment");
-        return;
-    }
-    // Verify if the styles have been injected
-    const existingStyle = document.getElementById("github-stats-card-styles");
-    if (existingStyle) {
-        console.log("GitHub Stats Card: Styles already injected");
-        return;
-    }
-    // Inject CSS code
-    const styleElement = document.createElement("style");
-    styleElement.id = "github-stats-card-styles";
-    styleElement.textContent = `
+function injectCSS(): void {
+  // Verify if we are in browser
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    console.warn("GitHub Stats Card: Not running in browser environment")
+    return
+  }
+
+  // Verify if the styles have been injected
+  const existingStyle = document.getElementById("github-stats-card-styles")
+  if (existingStyle) {
+    console.log("GitHub Stats Card: Styles already injected")
+    return
+  }
+
+  // Inject CSS code
+  const styleElement = document.createElement("style")
+  styleElement.id = "github-stats-card-styles"
+  styleElement.textContent = `
     :root {
       --stat-card-surface: #ffffff;
       --stat-card-border: #e1e5e9;
@@ -640,7 +716,8 @@ function injectCSS() {
         --stat-card-accent-hover: #79c0ff;
       }
     }
-  `;
-    // Append to head
-    document.head.appendChild(styleElement);
+  `
+
+  // Append to head
+  document.head.appendChild(styleElement)
 }

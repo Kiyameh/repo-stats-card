@@ -110,7 +110,7 @@
     </div>
 
     <script type="module">
-      import {createRepoCard} from './index.js'
+      import {createRepoCard, getRepoStats} from './index.js'
 
       // Ejemplo básico
       createRepoCard('#card-container', 'torvalds/linux')
@@ -125,6 +125,18 @@
         '#error-card',
         'usuario-inexistente/repositorio-inexistente'
       )
+
+      // Ejemplo de obtención de datos sin DOM (útil para SSR)
+      try {
+        const stats = await getRepoStats('vuejs/vue')
+        console.log('Estadísticas de Vue.js:', {
+          estrellas: stats.stargazersCount,
+          forks: stats.forksCount,
+          lenguajes: Object.keys(stats.languages)
+        })
+      } catch (error) {
+        console.error('Error al obtener estadísticas:', error)
+      }
     </script>
   </body>
 </html>
