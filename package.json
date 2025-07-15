@@ -1,0 +1,45 @@
+{
+  "name": "github-repo-stats-card",
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": "Andoni Abarzuza <kiyameh@outlook.com>",
+  "description": "A simple package to display a GitHub repository stats card.",
+  "keywords": [
+    "github",
+    "stats",
+    "card",
+    "repository",
+    "widget",
+    "typescript",
+    "types"
+  ],
+  "homepage": "https://kiyameh.com/labs#repo-stats-card",
+  "bugs": "https://github.com/Kiyameh/repo-stats-card/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kiyameh/repo-stats-card.git"
+  },
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "demo": "npx serve ."
+  }
+}

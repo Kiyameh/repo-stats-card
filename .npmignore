@@ -1,0 +1,17 @@
+# Archivos de desarrollo
+index.html
+OBJETIVES.md
+
+# Archivos de configuración de desarrollo
+.gitignore
+.npmignore
+tsconfig.json
+.github/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos temporales
+*.log
+*.tmp 

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>GitHub Stats Card - Demo</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #f6f8fa;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        text-align: center;
+        color: #24292e;
+        margin-bottom: 40px;
+      }
+
+      .demo-section {
+        background: white;
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .demo-section h2 {
+        margin-top: 0;
+        color: #24292e;
+        border-bottom: 1px solid #e1e4e8;
+        padding-bottom: 12px;
+      }
+
+      .card-container {
+        display: flex;
+        justify-content: center;
+        padding: 20px 0;
+      }
+
+      .multiple-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .loading {
+        text-align: center;
+        color: #586069;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 GitHub Stats Card - Demostración</h1>
+
+      <div class="demo-section">
+        <h2>Ejemplo Básico</h2>
+        <p>Tarjeta de estadísticas del repositorio de Linux:</p>
+        <div class="card-container">
+          <div id="card-container"></div>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2>Múltiples Repositorios</h2>
+        <p>Varias tarjetas de repositorios populares:</p>
+        <div class="multiple-cards">
+          <div
+            id="vue-card"
+            class="loading"
+          >
+            Cargando Vue.js...
+          </div>
+          <div
+            id="react-card"
+            class="loading"
+          >
+            Cargando React...
+          </div>
+          <div
+            id="angular-card"
+            class="loading"
+          >
+            Cargando Angular...
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2>Ejemplo con Error</h2>
+        <p>Repositorio que no existe (para mostrar manejo de errores):</p>
+        <div class="card-container">
+          <div id="error-card"></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import {createRepoCard} from './index.js'
+
+      // Ejemplo básico
+      createRepoCard('#card-container', 'torvalds/linux')
+
+      // Múltiples repositorios
+      createRepoCard('#vue-card', 'vuejs/vue')
+      createRepoCard('#react-card', 'facebook/react')
+      createRepoCard('#angular-card', 'angular/angular')
+
+      // Ejemplo con error
+      createRepoCard(
+        '#error-card',
+        'usuario-inexistente/repositorio-inexistente'
+      )
+    </script>
+  </body>
+</html>
