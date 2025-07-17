@@ -1,28 +1,30 @@
 # 📊 GitHub Stats Card
 
-Un paquete de npm ligero y sin dependencias que permite mostrar una tarjeta con estadísticas de un repositorio de GitHub en cualquier página web.
+[English](README.md) | [Español](README_ES.md)
 
-## ✨ Características
+A lightweight, dependency-free npm package that allows you to display a card with GitHub repository statistics on any web page.
 
-- **🚀 Sin dependencias**: Funciona únicamente con APIs nativas del navegador
-- **🎨 Estilo autocontenido**: CSS inyectado automáticamente, no interfiere con estilos existentes
-- **📱 Responsivo**: Se adapta a diferentes tamaños de pantalla con layout adaptativo
-- **⚡ Ligero**: Solo JavaScript vanilla con ES Modules
-- **🛡️ Manejo de errores**: Muestra mensajes de error elegantes cuando algo falla
-- **🔐 Soporte para autenticación**: Opcional token de GitHub para aumentar límites de API
-- **📅 Información temporal**: Fechas de creación y última actualización
-- **💻 Lenguajes de programación**: Distribución de lenguajes utilizados en el repositorio
-- **♿ Accesible**: Cumple con estándares WCAG y incluye soporte para lectores de pantalla
-- **🌙 Tema oscuro**: Soporte automático para `prefers-color-scheme: dark`
-- **📊 Gráficos duales**: Gráfico de torta en desktop, gráfico lineal en móvil
+## ✨ Features
 
-## 📦 Instalación
+- **🚀 No dependencies**: Works only with native browser APIs
+- **🎨 Self-contained styling**: CSS automatically injected, doesn't interfere with existing styles
+- **📱 Responsive**: Adapts to different screen sizes with adaptive layout
+- **⚡ Lightweight**: Vanilla JavaScript with ES Modules only
+- **🛡️ Error handling**: Shows elegant error messages when something fails
+- **🔐 Authentication support**: Optional GitHub token to increase API limits
+- **💻 Programming languages**: Top 5 most used languages in the repository
+- **♿ Accessible**: Complies with WCAG standards and includes screen reader support
+- **🌙 Dark theme**: Automatic support for `prefers-color-scheme: dark`
+- **📊 Dual charts**: Pie chart on desktop, linear chart on mobile
+- **🔄 Separation of concerns**: Data fetching logic separated from rendering
+
+## 📦 Installation
 
 ```bash
 npm install github-repo-stats-card
 ```
 
-## 🚀 Uso Básico
+## 🚀 Usage
 
 ### HTML
 
@@ -33,88 +35,100 @@ npm install github-repo-stats-card
 ### JavaScript
 
 ```javascript
-import {createRepoCard} from 'github-repo-stats-card'
+import {getRepoStats, renderRepoCard} from 'github-repo-stats-card'
 
-// Muestra las estadísticas del repositorio de Vue.js
-createRepoCard('#github-card', 'vuejs/vue')
+[!CAUTION]
+getRepoStats must always be used on the server side to avoid exposing the token to the client.
 
-// Con token de autenticación para mayor límite de API
-createRepoCard('#github-card', 'vuejs/vue', 'ghp_your_token_here')
+// Get repository data
+const stats = await getRepoStats('vuejs/vue')
+
+[!NOTE]
+renderRepoCard can be safely used on the client or server side.
+
+// Render the card with the obtained data
+renderRepoCard('#github-card', stats)
+
+// With authentication token
+const stats = await getRepoStats('vuejs/vue', 'ghp_your_token_here')
+renderRepoCard('#github-card', stats)
 ```
 
 ### TypeScript
 
-El paquete incluye soporte completo para TypeScript con tipos definidos:
+The package includes complete TypeScript support with defined types:
 
 ```typescript
-import {createRepoCard, getRepoStats, RepoStats} from 'github-repo-stats-card'
+import {getRepoStats, renderRepoCard, RepoStats} from 'github-repo-stats-card'
 
-// Crear tarjeta
-await createRepoCard('#github-card', 'vuejs/vue')
-
-// Obtener datos tipados
+// Get typed data
 const stats: RepoStats = await getRepoStats('vuejs/vue')
 console.log(stats.stargazersCount) // number
 console.log(stats.languages) // Record<string, number>
+
+// Render with typed data
+renderRepoCard('#github-card', stats)
 ```
 
 ## 📋 API
 
-### Funciones Principales
-
-#### `createRepoCard(selector, repoName, githubAuthToken?)`
-
-Crea una tarjeta de estadísticas de GitHub en el elemento especificado.
-
-- **`selector`** (string): Selector CSS del elemento contenedor donde se mostrará la tarjeta
-- **`repoName`** (string): Nombre del repositorio en formato `'usuario/nombre-del-repo'`
-- **`githubAuthToken`** (string, opcional): Token de autenticación de GitHub para aumentar los límites de la API
+### Main Functions
 
 #### `getRepoStats(repoName, githubAuthToken?)`
 
-Obtiene solo los datos del repositorio sin manipular el DOM. Útil para SSR (Server-Side Rendering).
+Gets only the repository data without manipulating the DOM.
 
-- **`repoName`** (string): Nombre del repositorio en formato `'usuario/nombre-del-repo'`
-- **`githubAuthToken`** (string, opcional): Token de autenticación de GitHub
-- **Returns**: Promise<RepoStats> - Estadísticas del repositorio
+[!CAUTION]
+getServerStats must always be used on the server side to avoid exposing the token to the client.
 
+- **`repoName`** (string): Repository name in format `'user/repo-name'`
+- **`githubAuthToken`** (string, optional): GitHub authentication token
+- **Returns**: Promise<RepoStats> - Repository statistics
+- **Note**: Programming languages are automatically filtered to show only the 5 most used
 
-## 📊 Estadísticas Mostradas
+#### `renderRepoCard(selector, stats)`
 
-La tarjeta muestra las siguientes estadísticas del repositorio:
+Renders a GitHub statistics card with provided data. This function only handles rendering and should be executed in the browser.
 
-- ⭐ **Estrellas** (Stargazers)
+- **`selector`** (string): CSS selector of the container element where the card will be displayed
+- **`stats`** (RepoStats): Repository statistics previously obtained with `getRepoStats`
+
+## 📊 Statistics Displayed
+
+The card shows the following repository statistics:
+
+- ⭐ **Stars** (Stargazers)
 - 🍴 **Forks**
-- ❗ **Issues abiertos**
-- 📝 **Descripción** del repositorio
-- 📅 **Fecha de creación** del repositorio
-- 🔄 **Última actualización** del repositorio
-- 💻 **Lenguajes de programación** utilizados
-- 🔗 **Enlace directo** al repositorio en GitHub
+- ❗ **Open issues**
+- 📝 **Repository description**
+- 📅 **Repository creation date**
+- 🔄 **Last repository update**
+- 💻 **Top 5 programming languages** most used
+- 🔗 **Direct link** to the repository on GitHub
 
-## ♿ Accesibilidad y Diseño
+## ♿ Accessibility and Design
 
-### Características de Accesibilidad
+### Accessibility Features
 
-- **Roles ARIA**: Uso apropiado de roles como `main`, `group`, `img` y `section`
-- **Etiquetas descriptivas**: `aria-label` y `aria-labelledby` para elementos interactivos
-- **Texto para lectores de pantalla**: Contenido oculto pero accesible para tecnologías asistivas
-- **Navegación por teclado**: Enlaces con `target="_blank"` y `rel="noopener noreferrer"`
-- **Contraste de colores**: Cumple con estándares de accesibilidad WCAG
+- **ARIA roles**: Appropriate use of roles like `main`, `group`, `img` and `section`
+- **Descriptive labels**: `aria-label` and `aria-labelledby` for interactive elements
+- **Screen reader text**: Hidden content but accessible to assistive technologies
+- **Keyboard navigation**: Links with `target="_blank"` and `rel="noopener noreferrer"`
+- **Color contrast**: Complies with WCAG accessibility standards
 
-### Diseño Responsivo
+### Responsive Design
 
-- **Layout adaptativo**: Grid en desktop, flexbox en móvil
-- **Gráficos duales**: Gráfico de torta en desktop, gráfico lineal en móvil
-- **Tipografía escalable**: Variables CSS para tamaños de fuente consistentes
-- **Espaciado responsivo**: Márgenes y padding que se adaptan al tamaño de pantalla
-- **Tema oscuro**: Soporte automático para `prefers-color-scheme: dark`
+- **Adaptive layout**: Grid on desktop, flexbox on mobile
+- **Dual charts**: Pie chart on desktop, linear chart on mobile
+- **Scalable typography**: CSS variables for consistent font sizes
+- **Responsive spacing**: Margins and padding that adapt to screen size
+- **Dark theme**: Automatic support for `prefers-color-scheme: dark`
 
-## 🎨 Personalización
+## 🎨 Customization
 
-El paquete inyecta automáticamente los estilos CSS necesarios. Los estilos están encapsulados en clases con prefijo `stat-card-` para evitar conflictos con tu CSS existente.
+The package automatically injects the necessary CSS styles. Styles are encapsulated in classes with `stat-card-` prefix to avoid conflicts with your existing CSS.
 
-Se aplican las siguientes variables css por defecto que se pueden sobreescribir: 
+The following CSS variables are applied by default and can be overridden:
 
       --stat-card-surface: #ffffff;
       --stat-card-border: #e1e5e9;
@@ -133,7 +147,7 @@ Se aplican las siguientes variables css por defecto que se pueden sobreescribir:
       --stat-card-font-base: 1rem;
       --stat-card-font-lg: 1.125rem;
 
-### Estructura HTML Generada
+### Generated HTML Structure
 
 ```html
 <div class="stat-card-container">
@@ -144,10 +158,10 @@ Se aplican las siguientes variables css por defecto que se pueden sobreescribir:
         <header class="stat-card-header">
           <h1 class="stat-card-title">
             <a href="..." class="stat-card-link" target="_blank" rel="noopener noreferrer">
-              nombre-del-repo
+              repo-name
             </a>
           </h1>
-          <p class="stat-card-full-name">usuario/repositorio</p>
+          <p class="stat-card-full-name">user/repository</p>
         </header>
 
         <div class="stat-card-stats" role="group" aria-label="Repository statistics">
@@ -158,10 +172,10 @@ Se aplican las siguientes variables css por defecto que se pueden sobreescribir:
             <span class="stat-card-stat-value">1.2K</span>
             <span>stars</span>
           </div>
-          <!-- Más estadísticas... -->
+          <!-- More statistics... -->
         </div>
 
-        <p class="stat-card-description">Descripción del repositorio</p>
+        <p class="stat-card-description">Repository description</p>
 
         <div class="stat-card-dates">
           <div class="stat-card-date">
@@ -198,7 +212,7 @@ Se aplican las siguientes variables css por defecto que se pueden sobreescribir:
               <span>JavaScript</span>
               <span class="stat-card-language-percentage">45.2%</span>
             </li>
-            <!-- Más lenguajes... -->
+            <!-- More languages... -->
           </ul>
         </section>
       </div>
@@ -212,91 +226,56 @@ Se aplican las siguientes variables css por defecto que se pueden sobreescribir:
 </div>
 ```
 
-## 🔧 Ejemplos de Uso
+## 🔧 Usage Examples
 
-### Múltiples Tarjetas
-
-```javascript
-import {createRepoCard} from 'github-repo-stats-card'
-
-// Crear varias tarjetas
-createRepoCard('#vue-card', 'vuejs/vue')
-createRepoCard('#react-card', 'facebook/react')
-createRepoCard('#angular-card', 'angular/angular')
-```
-
-### Con Token de Autenticación
-
-```javascript
-import {createRepoCard} from 'github-repo-stats-card'
-
-// Con token para mayor límite de API
-const token = 'ghp_your_github_token_here'
-createRepoCard('#my-card', 'usuario/repositorio', token)
-```
-
-### Obtener Solo Datos (SSR)
-
-```javascript
-import {getRepoStats} from 'github-repo-stats-card'
-
-// Obtener datos sin manipular el DOM (útil para SSR)
-const stats = await getRepoStats('vuejs/vue')
-console.log(stats.stargazersCount)
-console.log(stats.languages)
-
-// Con token de autenticación
-const stats = await getRepoStats('vuejs/vue', 'ghp_your_token_here')
-```
-
-### Con Manejo de Errores
+### With Error Handling
 
 ```javascript
 import {createRepoCard} from 'github-repo-stats-card'
 
 try {
-  await createRepoCard('#my-card', 'usuario/repositorio')
+  await createRepoCard('#my-card', 'user/repository')
 } catch (error) {
-  console.error('Error al cargar la tarjeta:', error)
+  console.error('Error loading card:', error)
 }
 ```
 
-## 🛠️ Desarrollo Local
+## 🛠️ Local Development
 
-1. Clona el repositorio
-2. No hay dependencias que instalar (solo JavaScript vanilla)
-3. Abre `index.html` en tu navegador para ver la demostración
-4. Para desarrollo con TypeScript, ejecuta `npm run build` para compilar
+1. Clone the repository
+2. No dependencies to install (vanilla JavaScript only)
+3. Open `index.html` in your browser to see the demo
+4. For TypeScript development, run `npm run build` to compile
 
-## 📝 API de GitHub
+## 📝 GitHub API
 
-Este paquete utiliza la [API pública de GitHub](https://docs.github.com/en/rest/reference/repos#get-a-repository) para obtener las estadísticas del repositorio.
+This package uses the [GitHub public API](https://docs.github.com/en/rest/reference/repos#get-a-repository) to obtain repository statistics.
 
-**Límites de la API:**
+**API Limits:**
 
-- 60 requests por hora para IPs no autenticadas
-- 5,000 requests por hora con token de autenticación
-- Para mayor límite, considera usar un token de GitHub
+- 60 requests per hour for unauthenticated IPs
+- 5,000 requests per hour with authentication token
+- For higher limits, consider using a GitHub token
 
-### Crear un Token de GitHub
+### Create a GitHub Token
 
-1. Ve a [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens)
-2. Genera un nuevo token con permisos `public_repo`
-3. Usa el token como tercer parámetro en las funciones
+1. Go to [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens)
+2. Generate a new token with `public_repo` permissions
+3. Use the token as the third parameter in the functions
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-Las contribuciones son bienvenidas. Por favor, abre un issue o pull request para sugerir mejoras.
+Contributions are welcome. Please open an issue or pull request to suggest improvements.
 
-## 📄 Licencia
+## 📄 License
 
-MIT License - ver el archivo LICENSE para más detalles.
+MIT License - see the LICENSE file for more details.
 
-## 🙏 Agradecimientos
+## 🙏 Acknowledgments
 
-- [GitHub API](https://docs.github.com/en/rest) por proporcionar los datos
-- La comunidad de desarrolladores por las ideas y feedback
+- [GitHub API](https://docs.github.com/en/rest) for providing the data
+- The developer community for ideas and feedback
 
 ---
 
-**¿Te gustó este paquete? ¡Dale una ⭐ en GitHub!**
+**Did you like this package? Give it a ⭐ on GitHub!**

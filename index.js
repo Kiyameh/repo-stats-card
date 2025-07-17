@@ -1,88 +1,16 @@
 /**
- * Función principal para crear una tarjeta de estadísticas de GitHub
- * @param {string} selector - Selector CSS del elemento contenedor
- * @param {string} repoName - Nombre del repositorio en formato 'usuario/nombre-del-repo'
- * @param {string} githubAuthToken - Token de autenticación de Github opcional
- */
-export async function createRepoCard(selector, repoName, githubAuthToken) {
-    // Verificar si estamos en el navegador
-    if (typeof window === 'undefined' || typeof document === 'undefined') {
-        console.warn('createRepoCard: Esta función solo puede ejecutarse en el navegador');
-        return;
-    }
-    // Validar parámetros
-    if (!selector || !repoName) {
-        throw new Error('Se requieren tanto el selector como el nombre del repositorio');
-    }
-    try {
-        // Añadir el token de Github solo si está disponible
-        const headers = {
-            Accept: 'application/vnd.github.v3+json',
-        };
-        if (githubAuthToken) {
-            headers.Authorization = `Bearer ${githubAuthToken}`;
-        }
-        // Obtener datos del repositorio
-        const response = await fetch(`https://api.github.com/repos/${repoName}`, { headers });
-        const languages = await fetch(`https://api.github.com/repos/${repoName}/languages`, { headers });
-        if (!response.ok || !languages.ok) {
-            throw new Error(`Error al obtener datos del repositorio: ${response.status}`);
-        }
-        const repoData = await response.json();
-        const languagesData = await languages.json();
-        // Extraer estadísticas clave
-        const stats = {
-            name: repoData.name,
-            fullName: repoData.full_name,
-            htmlUrl: repoData.html_url,
-            stargazersCount: repoData.stargazers_count,
-            forksCount: repoData.forks_count,
-            openIssuesCount: repoData.open_issues_count,
-            createdAt: repoData.created_at,
-            updatedAt: repoData.updated_at,
-            description: repoData.description || 'Sin descripción',
-            languages: languagesData,
-        };
-        // Inyectar CSS si no existe
-        injectCSS();
-        // Generar HTML de la tarjeta
-        const cardHTML = generateHTML(stats);
-        // Encontrar el elemento contenedor
-        const container = document.querySelector(selector);
-        if (!container) {
-            throw new Error(`No se encontró el elemento con selector: ${selector}`);
-        }
-        // Insertar la tarjeta
-        container.innerHTML = cardHTML;
-    }
-    catch (error) {
-        console.error('Error al crear la tarjeta de GitHub:', error);
-        // Mostrar mensaje de error en el contenedor
-        const container = document.querySelector(selector);
-        if (container) {
-            container.innerHTML = `
-        <div class="github-stats-card error">
-          <p>❌ Error al cargar las estadísticas del repositorio</p>
-          <p class="error-message">${error.message}</p>
-        </div>
-      `;
-        }
-    }
-}
-/**
- * Obtiene solo los datos del repositorio sin manipular el DOM
- * Útil para SSR (Server-Side Rendering)
- * @param {string} repoName - Nombre del repositorio en formato 'usuario/nombre-del-repo'
- * @param {string} githubAuthToken - Token de autenticación de Github opcional
- * @returns {Promise<RepoStats>} Promesa que resuelve con las estadísticas del repositorio
+ * Get the stats of a GitHub repository from Github API
+ * @param {string} repoName - Repository name in format 'username/repository-name'
+ * @param {string} githubAuthToken - Github authentication token optional
+ * @returns {Promise<RepoStats>} Promise that resolves with the repository stats
  */
 export async function getRepoStats(repoName, githubAuthToken) {
-    // Validar parámetros
+    // 1. Validate parameters
     if (!repoName) {
-        throw new Error('Se requiere el nombre del repositorio');
+        throw new Error('Repository name is required');
     }
     try {
-        // Obtener datos del repositorio
+        // 2. Get repository data
         const headers = {
             Accept: 'application/vnd.github.v3+json',
         };
@@ -91,12 +19,21 @@ export async function getRepoStats(repoName, githubAuthToken) {
         }
         const response = await fetch(`https://api.github.com/repos/${repoName}`, { headers });
         const languages = await fetch(`https://api.github.com/repos/${repoName}/languages`, { headers });
+        // 3. Validate response
         if (!response.ok || !languages.ok) {
-            throw new Error(`Error al obtener datos del repositorio: ${response.status}`);
+            throw new Error(`Error getting repository data: ${response.status}`);
         }
         const repoData = await response.json();
         const languagesData = await languages.json();
-        // Extraer estadísticas clave
+        // 4. Filter top 5 languages by usage
+        const sortedLanguages = Object.entries(languagesData)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 5)
+            .reduce((acc, [language, bytes]) => {
+            acc[language] = bytes;
+            return acc;
+        }, {});
+        // 5. Return the stats
         return {
             name: repoData.name,
             fullName: repoData.full_name,
@@ -107,22 +44,64 @@ export async function getRepoStats(repoName, githubAuthToken) {
             description: repoData.description || 'Sin descripción',
             createdAt: repoData.created_at,
             updatedAt: repoData.updated_at,
-            languages: languagesData,
+            languages: sortedLanguages,
         };
     }
     catch (error) {
-        console.error('Error al obtener estadísticas del repositorio:', error);
+        console.error('Error getting repository stats:', error);
         throw error;
     }
 }
 /**
- * Escapa caracteres HTML para prevenir XSS
- * @param {string} text - Texto a escapar
- * @returns {string} Texto escapado
+ * Render a GitHub stats card with provided data
+ * @param {string} selector - CSS selector of the container element
+ * @param {RepoStats} stats - Repository stats
+ */
+export function renderRepoCard(selector, stats) {
+    // 1. Verify if we are in the browser
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+        console.warn('renderRepoCard: This function can only be executed in the browser');
+        return;
+    }
+    // 2. Validate parameters
+    if (!selector || !stats) {
+        throw new Error('Both selector and stats are required');
+    }
+    try {
+        // 3. Inject CSS if not exists
+        injectCSS();
+        // 4. Generate HTML of the card
+        const cardHTML = generateHTML(stats);
+        // 5. Find the container element
+        const container = document.querySelector(selector);
+        if (!container) {
+            throw new Error(`No container found with selector: ${selector}`);
+        }
+        // 6. Insert the card
+        container.innerHTML = cardHTML;
+    }
+    catch (error) {
+        console.error('Error rendering the GitHub card:', error);
+        // 7. Show error message in the container
+        const container = document.querySelector(selector);
+        if (container) {
+            container.innerHTML = `
+        <div class="github-stats-card error">
+          <p>❌ Error rendering the card</p>
+          <p class="error-message">${error.message}</p>
+        </div>
+      `;
+        }
+    }
+}
+/**
+ * Escape HTML characters to prevent XSS
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text
  */
 function escapeHtml(text) {
     if (typeof document === 'undefined') {
-        // Fallback para SSR
+        // Fallback for SSR
         return text
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -135,9 +114,9 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 /**
- * Formatea una fecha en formato "DD/MM/YYYY"
- * @param {string} dateString - Fecha en formato ISO 8601
- * @returns {string} Fecha formateada
+ * Format a date in format "DD/MM/YYYY"
+ * @param {string} dateString - Date in ISO 8601 format
+ * @returns {string} Formatted date
  */
 function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -147,9 +126,9 @@ function formatDate(dateString) {
     });
 }
 /**
- * Formatea un número en formato "1.2K" o "1.2M"
- * @param {number} num - Número a formatear
- * @returns {string} Número formateado
+ * Format a number in format "1.2K" or "1.2M"
+ * @param {number} num - Number to format
+ * @returns {string} Formatted number
  */
 function formatNumber(num) {
     if (num >= 1000000) {
@@ -161,9 +140,9 @@ function formatNumber(num) {
     return num.toString();
 }
 /**
- * Obtiene el color de un lenguaje de programación
- * @param {string} language - Lenguaje de programación
- * @returns {string} Color del lenguaje
+ * Get the color of a programming language
+ * @param {string} language - Programming language
+ * @returns {string} Color of the language
  */
 function getLanguageColor(language) {
     const colors = {
@@ -187,9 +166,9 @@ function getLanguageColor(language) {
     return colors[language] || "#8b949e";
 }
 /**
- * Genera los segmentos de un gráfico de torta
- * @param {Array<{ language: string; percentage: string }>} languagePercentages - Array de lenguajes y porcentajes
- * @returns {string} HTML de los segmentos
+ * Generate the segments of a pie chart
+ * @param {Array<{ language: string; percentage: string }>} languagePercentages - Array of languages and percentages
+ * @returns {string} HTML of the segments
  */
 function generatePieSegments(languagePercentages) {
     let cumulativePercentage = 0;
@@ -211,9 +190,9 @@ function generatePieSegments(languagePercentages) {
         .join("");
 }
 /**
- * Genera el HTML de la tarjeta de estadísticas de GitHub
- * @param {RepoStats} stats - Estadísticas del repositorio
- * @returns {string} HTML de la tarjeta
+ * Generate the HTML of the GitHub stats card
+ * @param {RepoStats} stats - Repository stats
+ * @returns {string} HTML of the card
  */
 function generateHTML(stats) {
     // Calculate language percentages
@@ -329,21 +308,21 @@ function generateHTML(stats) {
   `;
 }
 /**
- * Inyecta el CSS de la tarjeta de estadísticas de GitHub
+ * Inject the CSS of the GitHub stats card
  */
 function injectCSS() {
-    // Verify if we are in browser
+    // 1. Verify if we are in browser
     if (typeof window === "undefined" || typeof document === "undefined") {
         console.warn("GitHub Stats Card: Not running in browser environment");
         return;
     }
-    // Verify if the styles have been injected
+    // 2. Verify if the styles have been injected
     const existingStyle = document.getElementById("github-stats-card-styles");
     if (existingStyle) {
         console.log("GitHub Stats Card: Styles already injected");
         return;
     }
-    // Inject CSS code
+    // 3. Inject CSS code
     const styleElement = document.createElement("style");
     styleElement.id = "github-stats-card-styles";
     styleElement.textContent = `

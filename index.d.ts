@@ -11,17 +11,15 @@ export interface RepoStats {
     languages: Record<string, number>;
 }
 /**
- * Función principal para crear una tarjeta de estadísticas de GitHub
- * @param {string} selector - Selector CSS del elemento contenedor
- * @param {string} repoName - Nombre del repositorio en formato 'usuario/nombre-del-repo'
- * @param {string} githubAuthToken - Token de autenticación de Github opcional
- */
-export declare function createRepoCard(selector: string, repoName: string, githubAuthToken?: string): Promise<void>;
-/**
- * Obtiene solo los datos del repositorio sin manipular el DOM
- * Útil para SSR (Server-Side Rendering)
- * @param {string} repoName - Nombre del repositorio en formato 'usuario/nombre-del-repo'
- * @param {string} githubAuthToken - Token de autenticación de Github opcional
- * @returns {Promise<RepoStats>} Promesa que resuelve con las estadísticas del repositorio
+ * Get the stats of a GitHub repository from Github API
+ * @param {string} repoName - Repository name in format 'username/repository-name'
+ * @param {string} githubAuthToken - Github authentication token optional
+ * @returns {Promise<RepoStats>} Promise that resolves with the repository stats
  */
 export declare function getRepoStats(repoName: string, githubAuthToken?: string): Promise<RepoStats>;
+/**
+ * Render a GitHub stats card with provided data
+ * @param {string} selector - CSS selector of the container element
+ * @param {RepoStats} stats - Repository stats
+ */
+export declare function renderRepoCard(selector: string, stats: RepoStats): void;
