@@ -13,7 +13,7 @@
     "typescript",
     "types"
   ],
-  "homepage": "https://kiyameh.com/labs#repo-stats-card",
+  "homepage": "https://kiyameh.com/es/projects/github-repo-stat-card",
   "bugs": "https://github.com/Kiyameh/repo-stats-card/issues",
   "repository": {
     "type": "git",
